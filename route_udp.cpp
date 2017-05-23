@@ -1,7 +1,9 @@
-	#include<iostream>
+#include<iostream>
 #include<iomanip>
 #include<fstream>
 #include<sstream>
+#include<numeric>
+#include<algorithm>
 #include"route_udp.h"
 #include"config.h"
 #include"gtt.h"
