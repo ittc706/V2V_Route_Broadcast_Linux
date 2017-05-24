@@ -1,9 +1,7 @@
-#include<iostream>
+	#include<iostream>
 #include<iomanip>
 #include<fstream>
 #include<sstream>
-#include<numeric>
-#include<algorithm>
 #include"route_udp.h"
 #include"config.h"
 #include"gtt.h"
@@ -191,8 +189,8 @@ void route_udp::start_sending_data() {
 				for (int dst_id = 0; dst_id < route_udp_node::s_node_count; dst_id++) {
 					if (dst_id == source_node_id||vue_physics::get_distance(source_node.m_send_event_queue.front()->get_origin_source_node_id(), dst_id)>1000) continue; //<Warn>统计距离根据需求而定
 					
-					vector<int>::iterator marked = find(get_node_array()[dst_id].route_event_recevied.begin(), get_node_array()[dst_id].route_event_recevied.end(), source_node.m_send_event_queue.front()->get_event_id());
-					if (marked != get_node_array()[dst_id].route_event_recevied.end()) continue;//如果某节点已经接收过该事件则不进行传输（减少运算量）
+					map<int, double>::iterator marked = get_node_array()[dst_id].success_route_event.find(source_node.m_send_event_queue.front()->get_event_id());
+					if (marked != get_node_array()[dst_id].success_route_event.end()) continue;//如果某节点已经接收过该事件则不进行传输（减少运算量）
 
 					source_node.sending_link_event.push_back(new route_udp_link_event(
 						source_node_id, dst_id, select_res.second, source_node.peek_send_event_queue()->get_tti_num()));
@@ -253,6 +251,8 @@ void route_udp::transmit_data() {
 
 				route_udp_node& destination_node = get_node_array()[(*it)->get_destination_node_id()];
 
+				int destination_node_id = destination_node.get_id();
+
 				int origin_node_id = source_node.m_send_event_queue.front()->get_origin_source_node_id();
 
 				//所有link_event处理完毕后，维护干扰列表
@@ -270,10 +270,11 @@ void route_udp::transmit_data() {
 					else {//广播
 						//s_logger_link_pdr_distance << 0 << "," << vue_physics::get_distance(origin_node_id, destination_node.get_id()) << endl;//记录失败与当前距离
 						
-						vector<int>::iterator marked = find(destination_node.route_event_not_recevied.begin(), destination_node.route_event_not_recevied.end(), source_node.m_send_event_queue.front()->get_event_id());
-						vector<int>::iterator _marked = find(destination_node.route_event_recevied.begin(), destination_node.route_event_recevied.end(), source_node.m_send_event_queue.front()->get_event_id());
-						if (marked == destination_node.route_event_not_recevied.end()&&_marked==destination_node.route_event_recevied.end()) {//如果该事件没有被接收，则加入标记
-							destination_node.route_event_not_recevied.push_back(source_node.m_send_event_queue.front()->get_event_id());//标记该接收节点已经收到过此事件，避免重复接收
+
+						map<int,double>::iterator marked = destination_node.failed_route_event.find(source_node.m_send_event_queue.front()->get_event_id()); 
+						map<int, double>::iterator _marked = destination_node.success_route_event.find(source_node.m_send_event_queue.front()->get_event_id());
+						if (marked == destination_node.failed_route_event.end()&&_marked==destination_node.success_route_event.end()) {//如果该事件没有被接收，则加入标记
+							destination_node.failed_route_event[source_node.m_send_event_queue.front()->get_event_id()] = vue_physics::get_distance(origin_node_id, destination_node_id);//标记该接收节点已经收到过此事件，避免重复接收
 								m_failed_route_event_num++;
 							}
 					}
@@ -299,11 +300,11 @@ void route_udp::transmit_data() {
 					//如果是广播，则根据路由算法进行处理
 					else {
 						//s_logger_link_pdr_distance << 1 << "," << vue_physics::get_distance(origin_node_id, destination_node.get_id()) << endl;//记录接收成功与当前距离
-					
-						vector<int>::iterator marked = find(destination_node.route_event_recevied.begin(), destination_node.route_event_recevied.end(), source_node.m_send_event_queue.front()->get_event_id());
 
-						if (marked == destination_node.route_event_recevied.end()) {//如果该事件没有被接收，则加入标记
-							destination_node.route_event_recevied.push_back(source_node.m_send_event_queue.front()->get_event_id());//标记该接收节点已经收到过此事件，避免重复接收
+						map<int, double>::iterator marked = destination_node.success_route_event.find(source_node.m_send_event_queue.front()->get_event_id());
+						if (marked == destination_node.success_route_event.end()) {//如果该事件没有被接收，则加入标记
+							
+							destination_node.success_route_event[source_node.m_send_event_queue.front()->get_event_id()] = vue_physics::get_distance(origin_node_id, destination_node_id);//标记该接收节点已经收到过此事件，避免重复接收
 							m_success_route_event_num++;
 
 							s_logger_link_pdr_distance << source_node.m_send_event_queue.front()->m_hop << "," << get_gtt()->get_vue_array()[destination_node.get_id()].get_physics_level()->m_absx << "," << get_gtt()->get_vue_array()[destination_node.get_id()].get_physics_level()->m_absy << endl;
@@ -316,13 +317,14 @@ void route_udp::transmit_data() {
 								destination_node.peek_send_event_queue()->m_hop--;//广播跳数减一
 							}
 
-							vector<int>::iterator failed = find(destination_node.route_event_not_recevied.begin(), destination_node.route_event_not_recevied.end(), source_node.m_send_event_queue.front()->get_event_id());
-							if (failed != destination_node.route_event_not_recevied.end()) {
+							map<int, double>::iterator failed = destination_node.failed_route_event.find(source_node.m_send_event_queue.front()->get_event_id());
+							if (failed != destination_node.failed_route_event.end()) {
 								m_failed_route_event_num--;
-								destination_node.route_event_not_recevied.erase(failed);
+								destination_node.failed_route_event.erase(failed);
 							}
 						}
 					}
+
 					if (source_node.m_send_event_queue.empty()) throw logic_error("error");
 
 					//所有link_event处理完毕后，删除route_event

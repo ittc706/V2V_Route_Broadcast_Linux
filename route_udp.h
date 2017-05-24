@@ -4,6 +4,7 @@
 #include<list>
 #include<queue>
 #include<set>
+#include<map>
 #include<utility>
 #include<random>
 #include<string>
@@ -252,9 +253,8 @@ public:
 class route_udp_node {
 	friend class route_udp;
 public:
-	vector<int> route_event_not_recevied;
-public:
-	vector<int> route_event_recevied;
+	map<int, double> success_route_event;
+	map<int, double> failed_route_event;
 public:
 	int m_broadcast_time;//下次广播的时间
 private:
@@ -352,6 +352,7 @@ private:
 	static std::ofstream s_logger_event;
 	static std::ofstream s_logger_link_pdr_distance;
 	static std::ofstream s_logger_delay;
+
 	/*
 	* 记录日志
 	*/
