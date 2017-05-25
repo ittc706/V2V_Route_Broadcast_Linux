@@ -1,5 +1,6 @@
 <bean id="global_control_config", class="global_control_config">
 	<property name="ntti", value="10000"/>
+	<property name="max_distance", value="1000"/>
 </bean>
 
 <bean id="gtt_highspeed_config", class="gtt_highspeed_config">

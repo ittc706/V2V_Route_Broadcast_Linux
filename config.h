@@ -13,16 +13,25 @@ class global_control_config :public object {
 	REGISTE_MEMBER_HEAD(global_control_config)
 
 	/*
-	* 仿真时长
+	* 仿真时长 和 统计距离
 	*/
 private:
 	int m_ntti;
 	void set_ntti(std::string t_ntti) {
 		m_ntti = stoi(t_ntti);
 	}
+
+	int m_max_distance;
+	void set_max_distance(std::string t_distance) {
+		m_max_distance = stoi(t_distance);
+	}
 public:
 	int get_ntti() {
 		return m_ntti;
+	}
+
+	int get_max_distance() {
+		return m_max_distance;
 	}
 };
 

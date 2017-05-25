@@ -187,7 +187,9 @@ void route_udp::start_sending_data() {
 
 				//对除了该节点以外的其他节点创建链路事件
 				for (int dst_id = 0; dst_id < route_udp_node::s_node_count; dst_id++) {
-					if (dst_id == source_node_id||vue_physics::get_distance(source_node.m_send_event_queue.front()->get_origin_source_node_id(), dst_id)>1000) continue; //<Warn>统计距离根据需求而定
+					context *__context = context::get_context();
+
+					if (dst_id == source_node_id||vue_physics::get_distance(source_node.m_send_event_queue.front()->get_origin_source_node_id(), dst_id)>((global_control_config*)__context->get_bean("global_control_config"))->get_max_distance()) continue;
 					
 					map<int, double>::iterator marked = get_node_array()[dst_id].success_route_event.find(source_node.m_send_event_queue.front()->get_event_id());
 					if (marked != get_node_array()[dst_id].success_route_event.end()) continue;//如果某节点已经接收过该事件则不进行传输（减少运算量）

@@ -39,6 +39,8 @@ void tmc::statistic() {
 
 	success_route_event.open("log/success_event.txt");
 	failed_route_event.open("log/failed_event.txt");
+	s_logger_failed_distance.open("log/failed_distance.txt");
+	s_logger_success_distance.open("log/success_distance.txt");
 
 	object* __object = context::get_context()->get_bean("route");
 
