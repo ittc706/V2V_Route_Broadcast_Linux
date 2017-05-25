@@ -135,7 +135,8 @@ void route_udp::event_trigger() {
 	context* __context = context::get_context();
 	int interval = ((route_config*)__context->get_bean("route_config"))->get_t_interval();
 
-	//在初始化时间过后，触发数据传输事件
+	if (get_time()->get_tti() < ((global_control_config*)__context->get_bean("global_control_config"))->get_ntti()) {
+		//在初始化时间过后，触发数据传输事件
 		for (int origin_source_node_id = 0; origin_source_node_id < route_udp_node::s_node_count; origin_source_node_id++) {
 			route_udp_node& source_node = get_node_array()[origin_source_node_id];
 			if (get_time()->get_tti() == source_node.m_broadcast_time) {
@@ -146,6 +147,8 @@ void route_udp::event_trigger() {
 				source_node.m_broadcast_time += interval;
 			}
 		}
+	}
+	
 
 	/*route_udp_node& source_node = get_node_array()[372];
 	if (get_time()->get_tti() == 1) {

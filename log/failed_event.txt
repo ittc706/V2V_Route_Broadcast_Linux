@@ -1,1 +1,1 @@
-total failed event: 23632
+total failed event: 43

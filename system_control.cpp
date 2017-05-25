@@ -32,7 +32,7 @@ using namespace std;
 void system_control::process() {
 	int *ptti = new int(0);
 
-	while (get_time()->get_tti() < get_global_control_config()->get_ntti()) {
+	while (get_time()->get_tti() < get_global_control_config()->get_ntti() + 50) {//最后50tti不产生事件，等待已产生事件发送完毕
 		cout << "TTI: " << get_time()->get_tti() << endl;
 
 		//车辆运动
