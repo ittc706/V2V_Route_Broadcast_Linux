@@ -135,28 +135,28 @@ void route_udp::event_trigger() {
 	context* __context = context::get_context();
 	int interval = ((route_config*)__context->get_bean("route_config"))->get_t_interval();
 
-	if (get_time()->get_tti() < ((global_control_config*)__context->get_bean("global_control_config"))->get_ntti()) {
-		//在初始化时间过后，触发数据传输事件
-		for (int origin_source_node_id = 0; origin_source_node_id < route_udp_node::s_node_count; origin_source_node_id++) {
-			route_udp_node& source_node = get_node_array()[origin_source_node_id];
-			if (get_time()->get_tti() == source_node.m_broadcast_time) {
-				get_node_array()[origin_source_node_id].offer_send_event_queue(
-					new route_udp_route_event(origin_source_node_id, -1, Broadcast, get_time()->get_tti(), route_udp_route_event::s_event_count++)
-				);
-				log_event(origin_source_node_id, -1);
-				source_node.m_broadcast_time += interval;
-			}
-		}
-	}
-	
+	//if (get_time()->get_tti() < ((global_control_config*)__context->get_bean("global_control_config"))->get_ntti()) {
+	//	//在初始化时间过后，触发数据传输事件
+	//	for (int origin_source_node_id = 0; origin_source_node_id < route_udp_node::s_node_count; origin_source_node_id++) {
+	//		route_udp_node& source_node = get_node_array()[origin_source_node_id];
+	//		if (get_time()->get_tti() == source_node.m_broadcast_time) {
+	//			get_node_array()[origin_source_node_id].offer_send_event_queue(
+	//				new route_udp_route_event(origin_source_node_id, -1, Broadcast, get_time()->get_tti(), route_udp_route_event::s_event_count++)
+	//			);
+	//			log_event(origin_source_node_id, -1);
+	//			source_node.m_broadcast_time += interval;
+	//		}
+	//	}
+	//}
+	//
 
-	/*route_udp_node& source_node = get_node_array()[372];
+	route_udp_node& source_node = get_node_array()[100];
 	if (get_time()->get_tti() == 1) {
-		get_node_array()[372].offer_send_event_queue(
-			new route_udp_route_event(372, -1, Broadcast, get_time()->get_tti(), route_udp_route_event::s_event_count++)
+		get_node_array()[100].offer_send_event_queue(
+			new route_udp_route_event(100, -1, Broadcast, get_time()->get_tti(), route_udp_route_event::s_event_count++)
 		);
-		log_event(372, -1);
-	}*/
+		log_event(100, -1);
+	}
 }
 
 void route_udp::start_sending_data() {

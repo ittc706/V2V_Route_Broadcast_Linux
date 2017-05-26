@@ -1,6 +1,1 @@
-TTI[0  ] - trigger[22 , -1 ]
-TTI[0  ] - trigger[83 , -1 ]
-TTI[5  ] - trigger[110, -1 ]
-TTI[6  ] - trigger[165, -1 ]
-TTI[26 ] - trigger[157, -1 ]
-TTI[29 ] - trigger[66 , -1 ]
+TTI[1  ] - trigger[100, -1 ]
