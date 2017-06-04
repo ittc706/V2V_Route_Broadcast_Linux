@@ -1,4 +1,4 @@
-	#include<iostream>
+#include<iostream>
 #include<iomanip>
 #include<fstream>
 #include<sstream>
@@ -135,28 +135,28 @@ void route_udp::event_trigger() {
 	context* __context = context::get_context();
 	int interval = ((route_config*)__context->get_bean("route_config"))->get_t_interval();
 
-	//if (get_time()->get_tti() < ((global_control_config*)__context->get_bean("global_control_config"))->get_ntti()) {
-	//	//在初始化时间过后，触发数据传输事件
-	//	for (int origin_source_node_id = 0; origin_source_node_id < route_udp_node::s_node_count; origin_source_node_id++) {
-	//		route_udp_node& source_node = get_node_array()[origin_source_node_id];
-	//		if (get_time()->get_tti() == source_node.m_broadcast_time) {
-	//			get_node_array()[origin_source_node_id].offer_send_event_queue(
-	//				new route_udp_route_event(origin_source_node_id, -1, Broadcast, get_time()->get_tti(), route_udp_route_event::s_event_count++)
-	//			);
-	//			log_event(origin_source_node_id, -1);
-	//			source_node.m_broadcast_time += interval;
-	//		}
-	//	}
-	//}
-	//
-
-	route_udp_node& source_node = get_node_array()[100];
-	if (get_time()->get_tti() == 1) {
-		get_node_array()[100].offer_send_event_queue(
-			new route_udp_route_event(100, -1, Broadcast, get_time()->get_tti(), route_udp_route_event::s_event_count++)
-		);
-		log_event(100, -1);
+	if (get_time()->get_tti() < ((global_control_config*)__context->get_bean("global_control_config"))->get_ntti()) {
+		//在初始化时间过后，触发数据传输事件
+		for (int origin_source_node_id = 0; origin_source_node_id < route_udp_node::s_node_count; origin_source_node_id++) {
+			route_udp_node& source_node = get_node_array()[origin_source_node_id];
+			if (get_time()->get_tti() == source_node.m_broadcast_time) {
+				get_node_array()[origin_source_node_id].offer_send_event_queue(
+					new route_udp_route_event(origin_source_node_id, -1, Broadcast, get_time()->get_tti(), route_udp_route_event::s_event_count++,1)
+				);
+				log_event(origin_source_node_id, -1);
+				source_node.m_broadcast_time += interval;
+			}
+		}
 	}
+	
+
+	//route_udp_node& source_node = get_node_array()[100];
+	//if (get_time()->get_tti() == 1) {
+	//	get_node_array()[100].offer_send_event_queue(
+	//		new route_udp_route_event(100, -1, Broadcast, get_time()->get_tti(), route_udp_route_event::s_event_count++)
+	//	);
+	//	log_event(100, -1);
+	//}
 }
 
 void route_udp::start_sending_data() {
@@ -315,11 +315,15 @@ void route_udp::transmit_data() {
 							s_logger_link_pdr_distance << source_node.m_send_event_queue.front()->m_hop << "," << get_gtt()->get_vue_array()[destination_node.get_id()].get_physics_level()->m_absx << "," << get_gtt()->get_vue_array()[destination_node.get_id()].get_physics_level()->m_absy << endl;
 
 							if (source_node.m_send_event_queue.front()->m_hop != 0) {
+								if (source_node_id != origin_node_id) {
+									int temp = 1;
+								}
+
 								destination_node.offer_send_event_queue(
-									new route_udp_route_event(origin_node_id, -1, Broadcast, get_time()->get_tti(), source_node.m_send_event_queue.front()->get_event_id())
+									new route_udp_route_event(origin_node_id, -1, Broadcast, get_time()->get_tti(), source_node.m_send_event_queue.front()->get_event_id(), --(source_node.m_send_event_queue.front()->m_hop))
 								);//如果需要继续广播则在接收节点发送队列里加入事件
 
-								destination_node.peek_send_event_queue()->m_hop--;//广播跳数减一
+								
 							}
 
 							map<int, double>::iterator failed = destination_node.failed_route_event.find(source_node.m_send_event_queue.front()->get_event_id());

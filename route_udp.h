@@ -99,7 +99,7 @@ public:
 	* 到目前为止的跳数
 	*/
 public:
-	int m_hop = 1;
+	int m_hop = 0;
 
 	/*
 	* 经历的节点列表(只包含成功传输的)
@@ -140,11 +140,12 @@ public:
 	/*
 	* 构造函数，提供给事件触发模块调用
 	*/
-	route_udp_route_event(int t_source_node, int t_destination_node,route_udp_route_event_type t_route_event_type,int current_tti,int event_id) :
+	route_udp_route_event(int t_source_node, int t_destination_node,route_udp_route_event_type t_route_event_type,int current_tti,int event_id,int hop) :
 		m_route_event_type(t_route_event_type),
 		m_event_id(event_id),
 		m_origin_source_node_id(t_source_node),
 		m_final_destination_node_id(t_destination_node),
+		m_hop(hop),
 		m_start_tti(current_tti),
 		m_tti_num(((tmc_config*)context::get_context()->get_bean("tmc_config"))->get_package_num()) {
 		set_current_node_id(t_source_node);
