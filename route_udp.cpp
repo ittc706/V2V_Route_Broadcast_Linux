@@ -146,6 +146,7 @@ void route_udp::event_trigger() {
 				log_event(origin_source_node_id, -1);
 				source_node.m_broadcast_time += interval;
 			}
+			source_node.success_route_event[route_udp_route_event::s_event_count-1] = 0;//标记该接收节点已经收到过此事件，避免重复接收
 		}
 	}
 	
@@ -274,14 +275,15 @@ void route_udp::transmit_data() {
 					}
 					else {//广播
 						//s_logger_link_pdr_distance << 0 << "," << vue_physics::get_distance(origin_node_id, destination_node.get_id()) << endl;//记录失败与当前距离
-						
-
-						map<int,double>::iterator marked = destination_node.failed_route_event.find(source_node.m_send_event_queue.front()->get_event_id()); 
-						map<int, double>::iterator _marked = destination_node.success_route_event.find(source_node.m_send_event_queue.front()->get_event_id());
-						if (marked == destination_node.failed_route_event.end()&&_marked==destination_node.success_route_event.end()) {//如果该事件没有被接收，则加入标记
-							destination_node.failed_route_event[source_node.m_send_event_queue.front()->get_event_id()] = vue_physics::get_distance(origin_node_id, destination_node_id);//标记该接收节点已经收到过此事件，避免重复接收
+						context *__context = context::get_context();
+						if (vue_physics::get_distance(origin_node_id, destination_node_id) <= ((global_control_config*)__context->get_bean("global_control_config"))->get_max_distance()) {
+							map<int, double>::iterator marked = destination_node.failed_route_event.find(source_node.m_send_event_queue.front()->get_event_id());
+							map<int, double>::iterator _marked = destination_node.success_route_event.find(source_node.m_send_event_queue.front()->get_event_id());
+							if (marked == destination_node.failed_route_event.end() && _marked == destination_node.success_route_event.end()) {//如果该事件没有被接收，则加入标记
+								destination_node.failed_route_event[source_node.m_send_event_queue.front()->get_event_id()] = vue_physics::get_distance(origin_node_id, destination_node_id);//标记该接收节点已经收到过此事件，避免重复接收
 								m_failed_route_event_num++;
 							}
+						}
 					}
 
 					if (source_node.m_send_event_queue.empty()) throw logic_error("error");
