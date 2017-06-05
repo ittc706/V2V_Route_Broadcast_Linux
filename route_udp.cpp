@@ -322,7 +322,7 @@ void route_udp::transmit_data() {
 								}
 
 								destination_node.offer_send_event_queue(
-									new route_udp_route_event(origin_node_id, -1, Broadcast, get_time()->get_tti(), source_node.m_send_event_queue.front()->get_event_id(), --(source_node.m_send_event_queue.front()->m_hop))
+									new route_udp_route_event(origin_node_id, -1, Broadcast, get_time()->get_tti(), source_node.m_send_event_queue.front()->get_event_id(), source_node.m_send_event_queue.front()->m_hop-1)
 								);//如果需要继续广播则在接收节点发送队列里加入事件
 
 								
