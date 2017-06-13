@@ -31,6 +31,33 @@
 #include"time_stamp.h"
 
 using namespace std;
+const int gtt_urban::s_rsu_num = 24;
+const double gtt_urban::s_rsu_topo_ratio[s_rsu_num * 2] = {
+	-2.0f, 1.5f,
+	-1.0f, 1.5f,
+	0.0f, 1.5f,
+	1.0f, 1.5f,
+	2.0f, 1.5f,
+	-3.0f, 0.5f,
+	-2.0f, 0.5f,
+	-1.0f, 0.5f,
+	0.0f, 0.5f,
+	1.0f, 0.5f,
+	2.0f, 0.5f,
+	3.0f, 0.5f,
+	-3.0f,-0.5f,
+	-2.0f,-0.5f,
+	-1.0f,-0.5f,
+	0.0f,-0.5f,
+	1.0f,-0.5f,
+	2.0f,-0.5f,
+	3.0f,-0.5f,
+	-2.0f,-1.5f,
+	-1.0f,-1.5f,
+	0.0f,-1.5f,
+	1.0f,-1.5f,
+	2.0f,-1.5f,
+};
 
 void gtt_urban::initialize() {
 	gtt_urban_config* __config = get_config();
@@ -54,7 +81,7 @@ void gtt_urban::initialize() {
 	}
 
 	//进行车辆的撒点
-	m_vue_array=new vue[tempVeUENum];
+	m_vue_array = new vue[tempVeUENum + s_rsu_num];
 	cout << "vuenum: " << tempVeUENum << endl;
 
 	int vue_id = 0;
@@ -66,7 +93,7 @@ void gtt_urban::initialize() {
 	default_random_engine e((unsigned)time(0));
 	uniform_real_distribution<double> u(0, 2 * (__config->get_road_length_ew() + __config->get_road_length_sn()));
 
-	for (int RoadIdx = 0; RoadIdx != __config->get_road_num(); RoadIdx++) {
+	for (int RoadIdx = 0; RoadIdx != __config->get_road_num(); RoadIdx++) {//撒车辆
 		for (int uprIdx = 0; uprIdx != m_pupr[RoadIdx]; uprIdx++) {
 			auto p = get_vue_array()[vue_id++].get_physics_level();
 			DistanceFromBottomLeft = u(e);
@@ -104,6 +131,14 @@ void gtt_urban::initialize() {
 			memset(p->m_pattern_occupied, false, sizeof(p->m_pattern_occupied));
 		}
 	}
+
+	//进行RSU的撒点
+	for (int RsuId = tempVeUENum; RsuId < tempVeUENum + s_rsu_num; RsuId++) {
+		auto p = get_vue_array()[RsuId].get_physics_level();
+		p->m_absx = s_rsu_topo_ratio[RsuId * 2 + 0] * (__config->get_road_length_sn() + 2 * __config->get_road_width());
+		p->m_absy = s_rsu_topo_ratio[RsuId * 2 + 1] * (__config->get_road_length_ew() + 2 * __config->get_road_width());
+	}
+
 	memory_clean::safe_delete(m_pupr, true);
 
 	vue_coordinate.close();
@@ -126,7 +161,7 @@ void gtt_urban::fresh_location() {
 		return;
 	}
 
-	for (int vue_id = 0; vue_id < get_vue_num(); vue_id++) {
+	for (int vue_id = 0; vue_id < get_vue_num()-s_rsu_num; vue_id++) {
 		get_vue_array()[vue_id].get_physics_level()->update_location_urban();
 	}
 

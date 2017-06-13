@@ -378,6 +378,9 @@ private:
 
 	int m_failed_route_event_num = 0;
 
+	int m_broadcast_num = 0;
+
+	int m_event_num = 0;
 public:
 
 	int get_success_route_event_num(){
@@ -385,6 +388,12 @@ public:
 	}
 	int get_failed_route_event_num() {
 		return m_failed_route_event_num;
+	}
+	int get_broadcast_num() {
+		return m_broadcast_num;
+	}
+	int get_event_num() {
+		return m_event_num;
 	}
 
 private:

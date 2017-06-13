@@ -145,19 +145,60 @@ void route_udp::event_trigger() {
 				);
 				log_event(origin_source_node_id, -1);
 				source_node.m_broadcast_time += interval;
+
+				source_node.success_route_event[route_udp_route_event::s_event_count - 1] = 0;//标记该接收节点已经收到过此事件，避免重复接收
 			}
-			source_node.success_route_event[route_udp_route_event::s_event_count-1] = 0;//标记该接收节点已经收到过此事件，避免重复接收
 		}
 	}
 	
 
-	//route_udp_node& source_node = get_node_array()[100];
+	//route_udp_node& source_node1 = get_node_array()[100];
+	//route_udp_node& source_node2 = get_node_array()[101];
+	//route_udp_node& source_node3 = get_node_array()[102];
 	//if (get_time()->get_tti() == 1) {
 	//	get_node_array()[100].offer_send_event_queue(
-	//		new route_udp_route_event(100, -1, Broadcast, get_time()->get_tti(), route_udp_route_event::s_event_count++)
+	//		new route_udp_route_event(100, -1, Broadcast, get_time()->get_tti(), route_udp_route_event::s_event_count++,1)
 	//	);
+
+	//	source_node1.success_route_event[route_udp_route_event::s_event_count - 1] = 0;//标记该接收节点已经收到过此事件，避免重复接收
+
 	//	log_event(100, -1);
+	//	get_node_array()[101].offer_send_event_queue(
+	//		new route_udp_route_event(101, -1, Broadcast, get_time()->get_tti(), route_udp_route_event::s_event_count++, 1)
+	//	);
+	//	log_event(101, -1);
+
+	//	source_node2.success_route_event[route_udp_route_event::s_event_count - 1] = 0;//标记该接收节点已经收到过此事件，避免重复接收
+
+	//	get_node_array()[102].offer_send_event_queue(
+	//		new route_udp_route_event(102, -1, Broadcast, get_time()->get_tti(), route_udp_route_event::s_event_count++, 1)
+	//	);
+
+	//	source_node3.success_route_event[route_udp_route_event::s_event_count - 1] = 0;//标记该接收节点已经收到过此事件，避免重复接收
+
+	//	log_event(102, -1);
 	//}
+
+	//int temp1 = 0;
+	//int temp2 = 0;
+	//int temp3 = 0;
+	//for (int vuenum = 0; vuenum < vue_physics::get_vue_num(); vuenum++)
+	//{
+	//	if (vue_physics::get_distance(vuenum, 100) < ((global_control_config*)__context->get_bean("global_control_config"))->get_max_distance()&&vuenum!=100) {
+	//		temp1++;
+	//	}
+
+	//	if (vue_physics::get_distance(vuenum, 101) < ((global_control_config*)__context->get_bean("global_control_config"))->get_max_distance()&&vuenum!=101) {
+	//		temp2++;
+	//	}
+
+	//	if (vue_physics::get_distance(vuenum, 102) < ((global_control_config*)__context->get_bean("global_control_config"))->get_max_distance() && vuenum != 102) {
+	//		temp3++;
+	//	}
+	//}
+	//cout << "车辆数1：" << temp1 << endl;
+	//cout << "车辆数2：" << temp2 << endl;
+	//cout << "车辆数3：" << temp3 << endl;
 }
 
 void route_udp::start_sending_data() {
@@ -191,16 +232,22 @@ void route_udp::start_sending_data() {
 
 				//对除了该节点以外的其他节点创建链路事件
 				for (int dst_id = 0; dst_id < route_udp_node::s_node_count; dst_id++) {
+
 					context *__context = context::get_context();
 
-					if (dst_id == source_node_id||vue_physics::get_distance(source_node.m_send_event_queue.front()->get_origin_source_node_id(), dst_id)>((global_control_config*)__context->get_bean("global_control_config"))->get_max_distance()) continue;
+					if (dst_id == source_node_id||vue_physics::get_distance(source_node.m_send_event_queue.front()->get_origin_source_node_id(), dst_id)>=((global_control_config*)__context->get_bean("global_control_config"))->get_max_distance()) continue;
 					
 					map<int, double>::iterator marked = get_node_array()[dst_id].success_route_event.find(source_node.m_send_event_queue.front()->get_event_id());
 					if (marked != get_node_array()[dst_id].success_route_event.end()) continue;//如果某节点已经接收过该事件则不进行传输（减少运算量）
 
 					source_node.sending_link_event.push_back(new route_udp_link_event(
 						source_node_id, dst_id, select_res.second, source_node.peek_send_event_queue()->get_tti_num()));
+				
 				}
+				/*cout << "源" << source_node.m_send_event_queue.front()->get_origin_source_node_id() << endl;
+				cout << source_node.sending_link_event.size() << endl;*/
+				if (source_node.m_send_event_queue.front()->m_hop == 1) m_event_num=m_event_num+ source_node.sending_link_event.size();
+
 				if (source_node.sending_link_event.size() == 0) {//如果广播接收节点均已完成接收则不再建立广播连接
 					route_udp_route_event* temp = source_node.m_send_event_queue.front();
 					source_node.m_send_event_queue.pop();
@@ -208,6 +255,9 @@ void route_udp::start_sending_data() {
 
 					//将已经加入干扰列表的车辆id再删掉
 					route_udp_node::s_node_id_per_pattern[select_res.second].erase(source_node_id);
+				}
+				else {
+					m_broadcast_num++;
 				}
 			}
 		}
@@ -276,7 +326,7 @@ void route_udp::transmit_data() {
 					else {//广播
 						//s_logger_link_pdr_distance << 0 << "," << vue_physics::get_distance(origin_node_id, destination_node.get_id()) << endl;//记录失败与当前距离
 						context *__context = context::get_context();
-						if (vue_physics::get_distance(origin_node_id, destination_node_id) <= ((global_control_config*)__context->get_bean("global_control_config"))->get_max_distance()) {
+						if (vue_physics::get_distance(origin_node_id, destination_node_id) < ((global_control_config*)__context->get_bean("global_control_config"))->get_max_distance()) {
 							map<int, double>::iterator marked = destination_node.failed_route_event.find(source_node.m_send_event_queue.front()->get_event_id());
 							map<int, double>::iterator _marked = destination_node.success_route_event.find(source_node.m_send_event_queue.front()->get_event_id());
 							if (marked == destination_node.failed_route_event.end() && _marked == destination_node.success_route_event.end()) {//如果该事件没有被接收，则加入标记

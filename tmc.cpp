@@ -36,11 +36,13 @@ void tmc::statistic() {
 	ofstream failed_route_event;
 	ofstream s_logger_failed_distance;
 	ofstream s_logger_success_distance;
+	ofstream s_logger_total_num;
 
 	success_route_event.open("log/success_event.txt");
 	failed_route_event.open("log/failed_event.txt");
 	s_logger_failed_distance.open("log/failed_distance.txt");
 	s_logger_success_distance.open("log/success_distance.txt");
+	s_logger_total_num.open("log/total_num.txt");
 
 	object* __object = context::get_context()->get_bean("route");
 
@@ -61,4 +63,7 @@ void tmc::statistic() {
 			success++;
 		}
 	}
+
+	s_logger_total_num << "total broadcast number:" << __route_udp->get_broadcast_num() << endl;
+	s_logger_total_num << "total event number:" << __route_udp->get_event_num() << endl;
 }

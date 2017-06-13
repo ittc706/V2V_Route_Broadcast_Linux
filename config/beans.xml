@@ -1,5 +1,5 @@
 <bean id="global_control_config", class="global_control_config">
-	<property name="ntti", value="2000"/>
+	<property name="ntti", value="20"/>
 	<property name="max_distance", value="1000"/>
 </bean>
 
@@ -47,7 +47,7 @@
 
 
 <bean id="route_config", class="route_config">
-	<property name="interval", value="1000"/>
+	<property name="interval", value="100"/>
 </bean>
 
 <bean id="time", class="v2x_time">
