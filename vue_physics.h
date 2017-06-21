@@ -153,32 +153,6 @@ private:
 private:
 	int m_road_id = -1;
 
-	/*
-	* 各个pattern上是否有接收信号,true表示有，false表示没有
-	*/
-private:
-	bool *m_pattern_occupied;
-
-	/*
-	* 拥塞等级<Warn>:目前暂时设为0
-	*/
-private:
-	int m_congestion_level = 0;
-public:
-	int get_congestion_level();
-
-	/*
-	* ZoneID,用于基于地理位置的资源分配
-	*
-	*/
-private:
-	int m_zone_id;
-public:
-	int get_zone_id() {
-		return m_zone_id;
-	}
-
-
     /*
 	* 发送时隙编号，用于时分复用，该区域编号在地理位置更新后更新
 	* 该编号假设由基站告知，并且假设基站无缝无重合划分整个区域

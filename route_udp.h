@@ -15,17 +15,6 @@
 
 using namespace std;
 
-enum route_udp_route_event_type {
-	Broadcast,//广播
-    Unicast//单播
-};
-
-enum route_udp_link_event_loss_reason {
-	UNKNOW,//待定
-	LOW_SINR,//SINR低于阈值
-	DST_IS_SENDING//接收节点正在发送无法接收
-};
-
 /*
 * 对于路由层，不涉及车辆，将车辆抽象为node
 * 对于一个节点，收发矛盾。即同一时刻只能收，或者只能发
@@ -51,16 +40,6 @@ public:
 public:
 	static int s_event_count;
 
-private:
-	/*
-	* 包的类型，类似于包头的设置，用来明确不同作用的数据包
-	*/
-	const route_udp_route_event_type m_route_event_type;
-public:
-	route_udp_route_event_type get_route_event_type() {
-		return m_route_event_type;
-	}
-
 	/*
 	* 源节点
 	*/
@@ -82,41 +61,10 @@ public:
 	}
 
 	/*
-	* 当前节点(已正确传输到当前节点，即当前节点也在m_through_node_vec之中)
-	*/
-private:
-	int m_current_node_id = -1;
-public:
-	void set_current_node_id(int t_current_node_id) {
-		m_current_node_id = t_current_node_id;
-		m_through_node_id_vec.push_back(m_current_node_id);
-	}
-	int get_current_node_id() {
-		return m_current_node_id;
-	}
-
-	/*
 	* 到目前为止的跳数
 	*/
 public:
 	int m_hop = 0;
-
-	/*
-	* 经历的节点列表(只包含成功传输的)
-	*/
-private:
-	std::vector<int> m_through_node_id_vec;
-public:
-	const std::vector<int>& get_through_node_vec() {
-		return m_through_node_id_vec;
-	}
-
-	/*
-	* 整个从源节点到目的节点是否传递成功
-	*/
-	bool is_finished() {
-		return m_current_node_id == m_final_destination_node_id;
-	}
 
 	/*
 	* 事件id
@@ -140,39 +88,21 @@ public:
 	/*
 	* 构造函数，提供给事件触发模块调用
 	*/
-	route_udp_route_event(int t_source_node, int t_destination_node,route_udp_route_event_type t_route_event_type,int current_tti,int event_id,int hop) :
-		m_route_event_type(t_route_event_type),
+	route_udp_route_event(int t_source_node, int t_destination_node, int current_tti, int event_id, int hop) :
 		m_event_id(event_id),
 		m_origin_source_node_id(t_source_node),
 		m_final_destination_node_id(t_destination_node),
 		m_hop(hop),
 		m_start_tti(current_tti),
 		m_tti_num(((tmc_config*)context::get_context()->get_bean("tmc_config"))->get_package_num()) {
-		set_current_node_id(t_source_node);
 	}
 
-	/*
-	* 转为字符串
-	*/
-	std::string to_string();
 };
 
 class route_udp_link_event {
 	friend class route_udp_node;
 	friend class route_udp;
 
-
-private:
-
-	/*
-	* 该link_evnent的SINR，传输需要几个TTI，则输出几个TTI上的SINR
-	*/
-	vector<double> sinr_per_tti;
-
-	/*
-	* 该link_evnent传输失败的原因
-	*/
-	route_udp_link_event_loss_reason m_loss_reason = UNKNOW;
 private:
 	/*
 	* 当前链路源节点id
@@ -260,7 +190,7 @@ public:
 	int m_broadcast_time;//下次广播的时间
 private:
 	/*
-	* 正在发送的link_event指针，若为单播则一个节点同时只能有一个，若为广播则为一个遍历除自己以外所有节点的向量
+	* 正在发送的link_event指针，每个子信道上一个
 	*/
 	std::vector<route_udp_link_event*> sending_link_event;
 
@@ -338,7 +268,9 @@ class route_config;
 
 class route_udp :public route {
 	REGISTE_MEMBER_HEAD(route_udp)
-
+public:
+	int s_car_num;//车辆总数
+	int s_rsu_num;//路边单元总数
 private:
 	/*
 	* 随机数引擎
@@ -348,16 +280,8 @@ private:
 	/*
 	* 日志输出流
 	*/
-	static std::ofstream s_logger_pattern;
-	static std::ofstream s_logger_link;
-	static std::ofstream s_logger_event;
 	static std::ofstream s_logger_link_pdr_distance;
 	static std::ofstream s_logger_delay;
-
-	/*
-	* 记录日志
-	*/
-	static void log_event(int t_origin_node_id, int t_fianl_destination_node_id);
 
 private:
 	/*

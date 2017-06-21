@@ -31,33 +31,6 @@
 #include"time_stamp.h"
 
 using namespace std;
-const int gtt_urban::s_rsu_num = 24;
-const double gtt_urban::s_rsu_topo_ratio[s_rsu_num * 2] = {
-	-2.0f, 1.5f,
-	-1.0f, 1.5f,
-	0.0f, 1.5f,
-	1.0f, 1.5f,
-	2.0f, 1.5f,
-	-3.0f, 0.5f,
-	-2.0f, 0.5f,
-	-1.0f, 0.5f,
-	0.0f, 0.5f,
-	1.0f, 0.5f,
-	2.0f, 0.5f,
-	3.0f, 0.5f,
-	-3.0f,-0.5f,
-	-2.0f,-0.5f,
-	-1.0f,-0.5f,
-	0.0f,-0.5f,
-	1.0f,-0.5f,
-	2.0f,-0.5f,
-	3.0f,-0.5f,
-	-2.0f,-1.5f,
-	-1.0f,-1.5f,
-	0.0f,-1.5f,
-	1.0f,-1.5f,
-	2.0f,-1.5f,
-};
 
 void gtt_urban::initialize() {
 	gtt_urban_config* __config = get_config();
@@ -81,7 +54,7 @@ void gtt_urban::initialize() {
 	}
 
 	//进行车辆的撒点
-	m_vue_array = new vue[tempVeUENum + s_rsu_num];
+	m_vue_array = new vue[tempVeUENum];
 	cout << "vuenum: " << tempVeUENum << endl;
 
 	int vue_id = 0;
@@ -125,20 +98,8 @@ void gtt_urban::initialize() {
 			vue_coordinate << p->m_absx << " ";
 			vue_coordinate << p->m_absy << " ";
 			vue_coordinate << endl;
-
-			//初始化pattern占用情况的数组全为false，即未被占用状态
-			p->m_pattern_occupied = new bool[get_rrm_config()->get_pattern_num()];
-			memset(p->m_pattern_occupied, false, sizeof(p->m_pattern_occupied));
 		}
 	}
-
-	//进行RSU的撒点
-	for (int RsuId = tempVeUENum; RsuId < tempVeUENum + s_rsu_num; RsuId++) {
-		auto p = get_vue_array()[RsuId].get_physics_level();
-		p->m_absx = s_rsu_topo_ratio[RsuId * 2 + 0] * (__config->get_road_length_sn() + 2 * __config->get_road_width());
-		p->m_absy = s_rsu_topo_ratio[RsuId * 2 + 1] * (__config->get_road_length_ew() + 2 * __config->get_road_width());
-	}
-
 	memory_clean::safe_delete(m_pupr, true);
 
 	vue_coordinate.close();
@@ -161,7 +122,7 @@ void gtt_urban::fresh_location() {
 		return;
 	}
 
-	for (int vue_id = 0; vue_id < get_vue_num()-s_rsu_num; vue_id++) {
+	for (int vue_id = 0; vue_id < get_vue_num(); vue_id++) {
 		get_vue_array()[vue_id].get_physics_level()->update_location_urban();
 	}
 

@@ -32,24 +32,22 @@ using namespace std;
 
 void tmc::statistic() {
 	context* __context = context::get_context();
-	ofstream success_route_event;
-	ofstream failed_route_event;
+
+	ofstream output;
 	ofstream s_logger_failed_distance;
 	ofstream s_logger_success_distance;
-	ofstream s_logger_total_num;
 
-	success_route_event.open("log/success_event.txt");
-	failed_route_event.open("log/failed_event.txt");
+	output.open("log/output.txt");
 	s_logger_failed_distance.open("log/failed_distance.txt");
 	s_logger_success_distance.open("log/success_distance.txt");
-	s_logger_total_num.open("log/total_num.txt");
 
 	object* __object = context::get_context()->get_bean("route");
 
 	route_udp* __route_udp = (route_udp*)__object;
-	success_route_event << "total success event: " << __route_udp->get_success_route_event_num() << endl;
-	failed_route_event << "total failed event: " << __route_udp->get_failed_route_event_num() << endl;
-	success_route_event << endl;
+	output << "total success event: " << __route_udp->get_success_route_event_num() << endl;
+	output << "total failed event: " << __route_udp->get_failed_route_event_num() << endl;
+	output << "total broadcast number:" << __route_udp->get_broadcast_num() << endl;
+	output << "total event number:" << __route_udp->get_event_num() << endl;
 
 	for (int i = 0; i < vue_physics::get_vue_num(); i++) {
 		map<int, double>::iterator failed = __route_udp->get_node_array()[i].failed_route_event.begin();
@@ -63,7 +61,4 @@ void tmc::statistic() {
 			success++;
 		}
 	}
-
-	s_logger_total_num << "total broadcast number:" << __route_udp->get_broadcast_num() << endl;
-	s_logger_total_num << "total event number:" << __route_udp->get_event_num() << endl;
 }

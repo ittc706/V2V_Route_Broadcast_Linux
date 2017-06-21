@@ -36,7 +36,7 @@ void gtt_highspeed::initialize() {
 	double* TotalTime = new double[__config->get_road_num()];//每条道路初始泊松撒点过程中所有车辆都已撒进区域内所用的总时间
 	std::list<double>* possion = new std::list<double>[__config->get_road_num()];//每条道路初始泊松撒点的车辆到达时间间隔list，单位s
 
-	srand((unsigned)time(0));
+	/*srand((unsigned)time(0));*/
 
 	//生成负指数分布的车辆到达间隔
 	int tempVeUENum = 0;
@@ -64,10 +64,8 @@ void gtt_highspeed::initialize() {
 
 	//进行车辆的撒点
 	m_vue_array = new vue[tempVeUENum];
+	cout << "vuenum: " << tempVeUENum << endl;
 	int vue_id = 0;
-
-	/*ofstream vue_coordinate;
-	vue_coordinate.open("log/vue_coordinate.txt");*/
 
 	for (int roadId = 0; roadId != __config->get_road_num(); roadId++) {
 		for (int uprIdx = 0; uprIdx != m_pupr[roadId]; uprIdx++) {
@@ -75,17 +73,9 @@ void gtt_highspeed::initialize() {
 			p->m_speed = __config->get_speed()/3.6;
 		    p->m_absx = -1732 + (TotalTime[roadId] - possion[roadId].back())*(p->m_speed);
 			p->m_absy = __config->get_road_topo_ratio()[roadId * 2 + 1]* __config->get_road_width();
-			//将撒点后的坐标输出到txt文件
-			//vue_coordinate << p->m_absx << " ";
-			//vue_coordinate << p->m_absy << " ";
-			//vue_coordinate << endl;
 
 			TotalTime[roadId] = TotalTime[roadId] - possion[roadId].back();
 			possion[roadId].pop_back();
-		
-			//初始化pattern占用情况的数组全为false，即未被占用状态
-			p->m_pattern_occupied = new bool[get_rrm_config()->get_pattern_num()];
-			memset(p->m_pattern_occupied, false, sizeof(p->m_pattern_occupied));
 
 			//根据是否采用时分的资源分配算法决定是否维护m_slot_time_idx,即当前车辆能发送数据的TTI
 			int granularity = get_rrm_config()->get_time_division_granularity();
@@ -101,8 +91,6 @@ void gtt_highspeed::initialize() {
 			}
 		}
 	}
-
-	//vue_coordinate.close();
 
 	memory_clean::safe_delete(m_pupr, true);
 	memory_clean::safe_delete(TotalTime, true);
@@ -216,4 +204,3 @@ void gtt_highspeed::calculate_pl(int t_vue_id1, int t_vue_id2) {
 	memory_clean::safe_delete(_antenna.RxAntSpacing, true);
 	memory_clean::safe_delete(__imta);
 }
-

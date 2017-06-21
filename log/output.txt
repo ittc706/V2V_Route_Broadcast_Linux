@@ -1,0 +1,4 @@
+total success event: 1310
+total failed event: 3576
+total broadcast number:668
+total event number:0

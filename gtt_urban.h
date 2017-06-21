@@ -27,9 +27,6 @@ public:
 	gtt_urban_config* get_config() {
 		return m_config;
 	}
-	static const double s_rsu_topo_ratio[24 * 2];
-
-	static const int s_rsu_num;
 	/*--------------------接口--------------------*/
 public:
 	v2x_time* get_time() override {

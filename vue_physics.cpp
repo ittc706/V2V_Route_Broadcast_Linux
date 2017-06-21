@@ -82,10 +82,6 @@ vue_physics::~vue_physics() {
 	
 }
 
-int vue_physics::get_congestion_level() {
-	return m_congestion_level;
-}
-
 void vue_physics::set_slot_time_idx(int t_slot_time_idx) {
 	this->m_slot_time_idx = t_slot_time_idx;
 }
