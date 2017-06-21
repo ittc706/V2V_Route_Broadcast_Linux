@@ -46,8 +46,9 @@ void tmc::statistic() {
 	route_udp* __route_udp = (route_udp*)__object;
 	output << "total success event: " << __route_udp->get_success_route_event_num() << endl;
 	output << "total failed event: " << __route_udp->get_failed_route_event_num() << endl;
+	output << "total event number:" << __route_udp->get_success_route_event_num()+ __route_udp->get_failed_route_event_num() << endl;
+	output << "pdr:" << __route_udp->get_success_route_event_num() / (__route_udp->get_success_route_event_num() + __route_udp->get_failed_route_event_num()) << endl;
 	output << "total broadcast number:" << __route_udp->get_broadcast_num() << endl;
-	output << "total event number:" << __route_udp->get_event_num() << endl;
 
 	for (int i = 0; i < vue_physics::get_vue_num(); i++) {
 		map<int, double>::iterator failed = __route_udp->get_node_array()[i].failed_route_event.begin();
