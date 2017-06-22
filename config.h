@@ -116,6 +116,19 @@ public:
 	int get_freshtime() {
 		return m_freshtime;
 	}
+
+	/*
+	* RSU放置间隔
+	*/
+private:
+	int m_rsu_space = INVALID;
+	void set_rsu_space(std::string t_rsu_space) {
+		m_rsu_space = stoi(t_rsu_space);
+	}
+public:
+	int get_rsu_space() {
+		return m_rsu_space;
+	}
 };
 
 

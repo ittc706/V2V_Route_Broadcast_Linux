@@ -1,6 +1,6 @@
 <bean id="global_control_config", class="global_control_config">
-	<property name="ntti", value="20"/>
-	<property name="max_distance", value="1000"/>
+	<property name="ntti", value="10"/>
+	<property name="max_distance", value="500"/>
 </bean>
 
 <bean id="gtt_highspeed_config", class="gtt_highspeed_config">
@@ -8,6 +8,7 @@
 	<property name="road_width", value="4.0"/>
 	<property name="speed", value="140"/>
 	<property name="freshtime", value="100"/>
+	<property name="rsu_space", value="100"/>
 	
 	<property name="time", ref-id="time"/>
 </bean>
@@ -63,7 +64,7 @@
 	<property name="global_control_config", ref-id="global_control_config"/>
 </bean>
 
-
+<!--
 <bean id="gtt", class="gtt_highspeed">	
 	<property name="time", ref-id="time"/>
 	<property name="config", ref-id="gtt_highspeed_config"/>
@@ -73,8 +74,8 @@
 	<dependency ref-id="gtt_highspeed_config"/>
 	<dependency ref-id="rrm_config"/>
 </bean>
+-->
 
-<!--
 <bean id="gtt", class="gtt_urban">	
 	<property name="time", ref-id="time"/>
 	<property name="config", ref-id="gtt_urban_config"/>
@@ -84,7 +85,7 @@
 	<dependency ref-id="gtt_urban_config"/>
 	<dependency ref-id="rrm_config"/>
 </bean>
--->
+
 
 
 <bean id="route", class="route_udp">	

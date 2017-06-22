@@ -1,4 +1,5 @@
-total success event: 1310
-total failed event: 3576
-total broadcast number:668
-total event number:0
+total success event: 2214
+total failed event: 6307
+total event number:8521
+pdr:25%
+total broadcast number:33

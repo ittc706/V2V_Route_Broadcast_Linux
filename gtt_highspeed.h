@@ -26,7 +26,8 @@ public:
 	gtt_highspeed_config* get_config() {
 		return m_config;
 	}
-
+public:
+	int s_rsu_num = 0;
 	/*--------------------接口--------------------*/
 public:
 	v2x_time* get_time() override {
@@ -44,6 +45,8 @@ public:
 	void initialize() override;
 
 	int get_vue_num() override;
+
+	int get_rsu_num() override;
 
 	int get_freshtime() override;
 

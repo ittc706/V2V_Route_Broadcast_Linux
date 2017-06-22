@@ -52,6 +52,14 @@ route_udp_node::route_udp_node() {
 	int interval = ((route_config*)__context->get_bean("route_config"))->get_t_interval();
 	uniform_int_distribution<int> u_start_broadcast_tti(0, interval);
 
+	int carnum = ((gtt*)__context->get_bean("gtt"))->get_vue_num() - ((gtt*)__context->get_bean("gtt"))->get_rsu_num();
+	if (get_id() < carnum) {
+		s_node_type = VUE;
+	}
+	else {
+		s_node_type = RSU;
+	}
+
 	m_broadcast_time = u_start_broadcast_tti(s_engine);//初始化第一次发送周期消息的时间，用于错开干扰
 }
 
@@ -90,6 +98,9 @@ void route_udp::initialize() {
 	s_logger_delay.open("log/route_udp_delay.txt");
 
 	route_udp_node::s_node_id_per_pattern = vector<set<int>>(get_rrm_config()->get_pattern_num());
+
+	s_car_num = vue_num - get_gtt()->get_rsu_num();
+	s_rsu_num = get_gtt()->get_rsu_num();
 }
 
 void route_udp::process_per_tti() {
@@ -111,65 +122,16 @@ void route_udp::event_trigger() {
 		//在初始化时间过后，触发数据传输事件
 		for (int origin_source_node_id = 0; origin_source_node_id < route_udp_node::s_node_count; origin_source_node_id++) {
 			route_udp_node& source_node = get_node_array()[origin_source_node_id];
-			if (get_time()->get_tti() == source_node.m_broadcast_time) {
+			if (source_node.s_node_type == RSU) continue;//RSU不触发事件
+			uniform_int_distribution<int> u_send_chance(0, 100);
+			if (get_time()->get_tti() == source_node.m_broadcast_time&&u_send_chance(s_engine) <= 30) {//触发概率
 				get_node_array()[origin_source_node_id].offer_send_event_queue(
-					new route_udp_route_event(origin_source_node_id, -1, get_time()->get_tti(), route_udp_route_event::s_event_count++,1)
+					new route_udp_route_event(origin_source_node_id, -1, get_time()->get_tti(), route_udp_route_event::s_event_count++, 0)
 				);
-				source_node.m_broadcast_time += interval;
-
 				source_node.success_route_event[route_udp_route_event::s_event_count - 1] = 0;//标记该接收节点已经收到过此事件，避免重复接收
 			}
 		}
 	}
-	
-
-	//route_udp_node& source_node1 = get_node_array()[100];
-	//route_udp_node& source_node2 = get_node_array()[101];
-	//route_udp_node& source_node3 = get_node_array()[102];
-	//if (get_time()->get_tti() == 1) {
-	//	get_node_array()[100].offer_send_event_queue(
-	//		new route_udp_route_event(100, -1, Broadcast, get_time()->get_tti(), route_udp_route_event::s_event_count++,1)
-	//	);
-
-	//	source_node1.success_route_event[route_udp_route_event::s_event_count - 1] = 0;//标记该接收节点已经收到过此事件，避免重复接收
-
-	//	log_event(100, -1);
-	//	get_node_array()[101].offer_send_event_queue(
-	//		new route_udp_route_event(101, -1, Broadcast, get_time()->get_tti(), route_udp_route_event::s_event_count++, 1)
-	//	);
-	//	log_event(101, -1);
-
-	//	source_node2.success_route_event[route_udp_route_event::s_event_count - 1] = 0;//标记该接收节点已经收到过此事件，避免重复接收
-
-	//	get_node_array()[102].offer_send_event_queue(
-	//		new route_udp_route_event(102, -1, Broadcast, get_time()->get_tti(), route_udp_route_event::s_event_count++, 1)
-	//	);
-
-	//	source_node3.success_route_event[route_udp_route_event::s_event_count - 1] = 0;//标记该接收节点已经收到过此事件，避免重复接收
-
-	//	log_event(102, -1);
-	//}
-
-	//int temp1 = 0;
-	//int temp2 = 0;
-	//int temp3 = 0;
-	//for (int vuenum = 0; vuenum < vue_physics::get_vue_num(); vuenum++)
-	//{
-	//	if (vue_physics::get_distance(vuenum, 100) < ((global_control_config*)__context->get_bean("global_control_config"))->get_max_distance()&&vuenum!=100) {
-	//		temp1++;
-	//	}
-
-	//	if (vue_physics::get_distance(vuenum, 101) < ((global_control_config*)__context->get_bean("global_control_config"))->get_max_distance()&&vuenum!=101) {
-	//		temp2++;
-	//	}
-
-	//	if (vue_physics::get_distance(vuenum, 102) < ((global_control_config*)__context->get_bean("global_control_config"))->get_max_distance() && vuenum != 102) {
-	//		temp3++;
-	//	}
-	//}
-	//cout << "车辆数1：" << temp1 << endl;
-	//cout << "车辆数2：" << temp2 << endl;
-	//cout << "车辆数3：" << temp3 << endl;
 }
 
 void route_udp::start_sending_data() {
@@ -277,7 +239,9 @@ void route_udp::transmit_data() {
 						map<int, double>::iterator _marked = destination_node.success_route_event.find(source_node.m_send_event_queue.front()->get_event_id());
 						if (marked == destination_node.failed_route_event.end() && _marked == destination_node.success_route_event.end()) {//如果该事件没有被接收，则加入标记
 							destination_node.failed_route_event[source_node.m_send_event_queue.front()->get_event_id()] = vue_physics::get_distance(origin_node_id, destination_node_id);//标记该接收节点已经收到过此事件，避免重复接收
-							m_failed_route_event_num++;
+							if (destination_node.s_node_type == VUE) {
+								m_failed_route_event_num++;
+							}
 						}
 					}
 					if (source_node.m_send_event_queue.empty()) throw logic_error("error");
@@ -298,7 +262,9 @@ void route_udp::transmit_data() {
 					if (marked == destination_node.success_route_event.end()) {//如果该事件没有被接收，则加入标记
 
 						destination_node.success_route_event[source_node.m_send_event_queue.front()->get_event_id()] = vue_physics::get_distance(origin_node_id, destination_node_id);//标记该接收节点已经收到过此事件，避免重复接收
-						m_success_route_event_num++;
+						if (destination_node.s_node_type == VUE) {
+							m_success_route_event_num++;
+						}
 
 						s_logger_link_pdr_distance << source_node.m_send_event_queue.front()->m_hop << "," << get_gtt()->get_vue_array()[destination_node.get_id()].get_physics_level()->m_absx << "," << get_gtt()->get_vue_array()[destination_node.get_id()].get_physics_level()->m_absy << endl;
 
@@ -311,7 +277,9 @@ void route_udp::transmit_data() {
 						}
 						map<int, double>::iterator failed = destination_node.failed_route_event.find(source_node.m_send_event_queue.front()->get_event_id());
 						if (failed != destination_node.failed_route_event.end()) {
-							m_failed_route_event_num--;
+							if (destination_node.s_node_type == VUE) {
+								m_failed_route_event_num--;
+							}
 							destination_node.failed_route_event.erase(failed);
 						}
 					}

@@ -32,6 +32,33 @@
 
 using namespace std;
 
+const double gtt_urban::s_rsu_topo_ratio[s_rsu_num * 2] = {
+	-2.0f, 1.5f,
+	-1.0f, 1.5f,
+	0.0f, 1.5f,
+	1.0f, 1.5f,
+	2.0f, 1.5f,
+	-3.0f, 0.5f,
+	-2.0f, 0.5f,
+	-1.0f, 0.5f,
+	0.0f, 0.5f,
+	1.0f, 0.5f,
+	2.0f, 0.5f,
+	3.0f, 0.5f,
+	-3.0f,-0.5f,
+	-2.0f,-0.5f,
+	-1.0f,-0.5f,
+	0.0f,-0.5f,
+	1.0f,-0.5f,
+	2.0f,-0.5f,
+	3.0f,-0.5f,
+	-2.0f,-1.5f,
+	-1.0f,-1.5f,
+	0.0f,-1.5f,
+	1.0f,-1.5f,
+	2.0f,-1.5f,
+};
+
 void gtt_urban::initialize() {
 	gtt_urban_config* __config = get_config();
 	int* m_pupr = new int[__config->get_road_num()];//每条路上的车辆数
@@ -54,8 +81,9 @@ void gtt_urban::initialize() {
 	}
 
 	//进行车辆的撒点
-	m_vue_array = new vue[tempVeUENum];
+	m_vue_array = new vue[tempVeUENum + s_rsu_num];
 	cout << "vuenum: " << tempVeUENum << endl;
+	cout << "rsunum:" << s_rsu_num << endl;
 
 	int vue_id = 0;
 	double DistanceFromBottomLeft = 0;
@@ -100,9 +128,25 @@ void gtt_urban::initialize() {
 			vue_coordinate << endl;
 		}
 	}
+
+	//进行RSU撒点
+
+	ofstream rsu_coordinate;
+	rsu_coordinate.open("log/rsu_coordinate.txt");
+
+	for (int rsuid = 0; rsuid < s_rsu_num; rsuid++) {
+		auto p = get_vue_array()[tempVeUENum + rsuid].get_physics_level();
+		p->m_absx = gtt_urban::s_rsu_topo_ratio[rsuid * 2 + 0] * (__config->get_road_length_sn() + 2 * __config->get_road_width());
+		p->m_absy = gtt_urban::s_rsu_topo_ratio[rsuid * 2 + 1] * (__config->get_road_length_ew() + 2 * __config->get_road_width());
+		rsu_coordinate << p->m_absx << " ";
+		rsu_coordinate << p->m_absy << " ";
+		rsu_coordinate << endl;
+	}
+
 	memory_clean::safe_delete(m_pupr, true);
 
 	vue_coordinate.close();
+	rsu_coordinate.close();
 
 	vue_physics::s_pl_all.assign(get_vue_num(), std::vector<double>(get_vue_num(), 0));
 	vue_physics::s_distance_all.assign(get_vue_num(), std::vector<double>(get_vue_num(), 0));
@@ -112,6 +156,9 @@ int gtt_urban::get_vue_num() {
 	return vue_physics::get_vue_num();
 }
 
+int gtt_urban::get_rsu_num() {
+	return s_rsu_num;
+}
 int gtt_urban::get_freshtime() {
 	return get_config()->get_freshtime();
 }
@@ -122,7 +169,7 @@ void gtt_urban::fresh_location() {
 		return;
 	}
 
-	for (int vue_id = 0; vue_id < get_vue_num(); vue_id++) {
+	for (int vue_id = 0; vue_id < get_vue_num() - s_rsu_num; vue_id++) {
 		get_vue_array()[vue_id].get_physics_level()->update_location_urban();
 	}
 

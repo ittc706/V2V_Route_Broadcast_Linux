@@ -15,6 +15,11 @@
 
 using namespace std;
 
+enum node_type {
+	VUE,
+	RSU
+};
+
 /*
 * 对于路由层，不涉及车辆，将车辆抽象为node
 * 对于一个节点，收发矛盾。即同一时刻只能收，或者只能发
@@ -188,6 +193,8 @@ public:
 	map<int, double> failed_route_event;
 public:
 	int m_broadcast_time;//下次广播的时间
+public:
+	node_type s_node_type;
 private:
 	/*
 	* 正在发送的link_event指针，每个子信道上一个

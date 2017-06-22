@@ -37,6 +37,7 @@ void gtt_highspeed::initialize() {
 	std::list<double>* possion = new std::list<double>[__config->get_road_num()];//每条道路初始泊松撒点的车辆到达时间间隔list，单位s
 
 	/*srand((unsigned)time(0));*/
+	s_rsu_num = __config->get_road_length() / __config->get_rsu_space();//RSU数量
 
 	//生成负指数分布的车辆到达间隔
 	int tempVeUENum = 0;
@@ -63,8 +64,12 @@ void gtt_highspeed::initialize() {
 	}
 
 	//进行车辆的撒点
-	m_vue_array = new vue[tempVeUENum];
+	ofstream vue_coordinate;
+	vue_coordinate.open("log/vue_coordinate.txt");
+
+	m_vue_array = new vue[tempVeUENum + s_rsu_num];
 	cout << "vuenum: " << tempVeUENum << endl;
+	cout << "rsunum:" << s_rsu_num << endl;
 	int vue_id = 0;
 
 	for (int roadId = 0; roadId != __config->get_road_num(); roadId++) {
@@ -73,6 +78,10 @@ void gtt_highspeed::initialize() {
 			p->m_speed = __config->get_speed()/3.6;
 		    p->m_absx = -1732 + (TotalTime[roadId] - possion[roadId].back())*(p->m_speed);
 			p->m_absy = __config->get_road_topo_ratio()[roadId * 2 + 1]* __config->get_road_width();
+
+			vue_coordinate << p->m_absx << " ";
+			vue_coordinate << p->m_absy << " ";
+			vue_coordinate << endl;
 
 			TotalTime[roadId] = TotalTime[roadId] - possion[roadId].back();
 			possion[roadId].pop_back();
@@ -92,6 +101,27 @@ void gtt_highspeed::initialize() {
 		}
 	}
 
+	//进行RSU的撒点
+
+	ofstream rsu_coordinate;
+	rsu_coordinate.open("log/rsu_coordinate.txt");
+
+	int rsuidx = 0;
+	for (int rsuid = tempVeUENum; rsuid < get_vue_num(); rsuid++) {
+		auto p = get_vue_array()[rsuid].get_physics_level();
+		p->m_absx = -1732.0f + rsuidx*__config->get_rsu_space();
+		p->m_absy = 0;
+
+		rsu_coordinate << p->m_absx << " ";
+		rsu_coordinate << p->m_absy << " ";
+		rsu_coordinate << endl;
+
+		rsuidx++;
+	}
+	
+	vue_coordinate.close();
+	rsu_coordinate.close();
+
 	memory_clean::safe_delete(m_pupr, true);
 	memory_clean::safe_delete(TotalTime, true);
 	memory_clean::safe_delete(possion, true);
@@ -104,6 +134,10 @@ int gtt_highspeed::get_vue_num() {
 	return vue_physics::get_vue_num();
 }
 
+int gtt_highspeed::get_rsu_num() {
+	return s_rsu_num;
+}
+
 int gtt_highspeed::get_freshtime() {
 	return get_config()->get_freshtime();
 }
@@ -113,7 +147,7 @@ void gtt_highspeed::fresh_location() {
 	if (get_time()->get_tti() % get_config()->get_freshtime() != 0) {
 		return;
 	}
-	for (int vue_id = 0; vue_id < get_vue_num(); vue_id++) {
+	for (int vue_id = 0; vue_id < get_vue_num()-s_rsu_num; vue_id++) {
 		get_vue_array()[vue_id].get_physics_level()->update_location_highspeed();
 
 		//每次更新车辆位置时重新判断车辆所在的zone_idx

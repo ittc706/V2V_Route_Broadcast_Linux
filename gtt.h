@@ -35,6 +35,11 @@ public:
 	virtual int get_vue_num() = 0;
 
 	/*
+	* 获取RSU数量
+	*/
+	virtual int get_rsu_num() = 0;
+
+	/*
 	* 获取位置更新时间
 	*/
 	virtual int get_freshtime() = 0;

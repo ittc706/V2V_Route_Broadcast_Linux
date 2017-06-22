@@ -154,6 +154,7 @@ void invoke(const object* obj, const std::string& method_name, const std::string
 		METHOD_INVOKE_ONE_PARAM(gtt_highspeed_config, set_road_width)
 		METHOD_INVOKE_ONE_PARAM(gtt_highspeed_config, set_speed)
 		METHOD_INVOKE_ONE_PARAM(gtt_highspeed_config, set_freshtime)
+		METHOD_INVOKE_ONE_PARAM(gtt_highspeed_config, set_rsu_space)
 		METHOD_INVOKE_CLASS_END(gtt_highspeed_config)
 
 		METHOD_INVOKE_CLASS_START(gtt_urban_config)

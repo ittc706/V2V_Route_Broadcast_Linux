@@ -27,6 +27,9 @@ public:
 	gtt_urban_config* get_config() {
 		return m_config;
 	}
+public:
+	static const int s_rsu_num = 24;
+    static const double s_rsu_topo_ratio[s_rsu_num * 2];
 	/*--------------------接口--------------------*/
 public:
 	v2x_time* get_time() override {
@@ -44,6 +47,8 @@ public:
 	void initialize() override;
 
 	int get_vue_num() override;
+
+	int get_rsu_num() override;
 
 	int get_freshtime() override;
 
