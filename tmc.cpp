@@ -49,6 +49,8 @@ void tmc::statistic() {
 	int total_num = success_num + failed_num;
 	double pdr = success_num*100 / total_num;
 
+	output << "vuenum:" << __route_udp->s_car_num << endl;
+	output << "rsunum:" << __route_udp->s_rsu_num << endl;
 	output << "total success event: " << success_num << endl;
 	output << "total failed event: " << failed_num << endl;
 	output << "total event number:" << total_num << endl;

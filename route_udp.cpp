@@ -124,10 +124,11 @@ void route_udp::event_trigger() {
 			route_udp_node& source_node = get_node_array()[origin_source_node_id];
 			if (source_node.s_node_type == RSU) continue;//RSU不触发事件
 			uniform_int_distribution<int> u_send_chance(0, 100);
-			if (get_time()->get_tti() == source_node.m_broadcast_time&&u_send_chance(s_engine) <= 30) {//触发概率
+			if (get_time()->get_tti() % interval == source_node.m_broadcast_time&&u_send_chance(s_engine) <= 30) {//触发概率
 				get_node_array()[origin_source_node_id].offer_send_event_queue(
 					new route_udp_route_event(origin_source_node_id, -1, get_time()->get_tti(), route_udp_route_event::s_event_count++, 0)
 				);
+				m_event_num++;
 				source_node.success_route_event[route_udp_route_event::s_event_count - 1] = 0;//标记该接收节点已经收到过此事件，避免重复接收
 			}
 		}
@@ -264,16 +265,15 @@ void route_udp::transmit_data() {
 						destination_node.success_route_event[source_node.m_send_event_queue.front()->get_event_id()] = vue_physics::get_distance(origin_node_id, destination_node_id);//标记该接收节点已经收到过此事件，避免重复接收
 						if (destination_node.s_node_type == VUE) {
 							m_success_route_event_num++;
+							s_logger_delay << get_time()->get_tti() - source_node.m_send_event_queue.front()->get_start_tti() << " ";
 						}
 
 						s_logger_link_pdr_distance << source_node.m_send_event_queue.front()->m_hop << "," << get_gtt()->get_vue_array()[destination_node.get_id()].get_physics_level()->m_absx << "," << get_gtt()->get_vue_array()[destination_node.get_id()].get_physics_level()->m_absy << endl;
 
 						if (source_node.m_send_event_queue.front()->m_hop != 0) {
 							destination_node.offer_send_event_queue(
-								new route_udp_route_event(origin_node_id, -1,get_time()->get_tti(), source_node.m_send_event_queue.front()->get_event_id(), source_node.m_send_event_queue.front()->m_hop - 1)
+								new route_udp_route_event(origin_node_id, -1,source_node.m_send_event_queue.front()->get_start_tti(), source_node.m_send_event_queue.front()->get_event_id(), source_node.m_send_event_queue.front()->m_hop - 1)
 							);//如果需要继续广播则在接收节点发送队列里加入事件
-
-
 						}
 						map<int, double>::iterator failed = destination_node.failed_route_event.find(source_node.m_send_event_queue.front()->get_event_id());
 						if (failed != destination_node.failed_route_event.end()) {
