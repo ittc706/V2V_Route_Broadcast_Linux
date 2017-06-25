@@ -25,6 +25,11 @@ private:
 	void set_max_distance(std::string t_distance) {
 		m_max_distance = stoi(t_distance);
 	}
+
+	int m_rsu_num;
+	void set_rsu_num(std::string t_rsu_num) {
+		m_rsu_num = stoi(t_rsu_num);
+	}
 public:
 	int get_ntti() {
 		return m_ntti;
@@ -32,6 +37,10 @@ public:
 
 	int get_max_distance() {
 		return m_max_distance;
+	}
+
+	int get_rsu_num() {
+		return m_rsu_num;
 	}
 };
 

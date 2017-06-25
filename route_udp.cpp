@@ -58,6 +58,7 @@ route_udp_node::route_udp_node() {
 	}
 	else {
 		s_node_type = RSU;
+		s_rsu_pattern_id = ((gtt*)__context->get_bean("gtt"))->get_rsu_pattern_id(get_id() - carnum);
 	}
 
 	m_broadcast_time = u_start_broadcast_tti(s_engine);//初始化第一次发送周期消息的时间，用于错开干扰
@@ -74,14 +75,20 @@ pair<int, int> route_udp_node::select_relay_information() {
 
 	int pattern_num = ((rrm_config*)context::get_context()->get_bean("rrm_config"))->get_pattern_num();
 
-	//节点在未占用的频段上随机挑选一个
-	vector<int> candidate;
-	for (int pattern_idx = 0; pattern_idx < pattern_num; pattern_idx++) {
+	//车辆节点在未占用的频段上随机挑选一个
+	if (s_node_type == VUE) {
+		vector<int> candidate;
+		for (int pattern_idx = 0; pattern_idx < pattern_num; pattern_idx++) {
 			candidate.push_back(pattern_idx);
+		}
+		if (candidate.size() != 0) {
+			uniform_int_distribution<int> u(0, static_cast<int>(candidate.size()) - 1);
+			res.second = candidate[u(s_engine)];
+		}
 	}
-	if (candidate.size() != 0) {
-		uniform_int_distribution<int> u(0, static_cast<int>(candidate.size()) - 1);
-		res.second = candidate[u(s_engine)];
+	//RSU节点固定频段
+	else {
+		res.second = s_rsu_pattern_id;
 	}
 	return res;
 }
@@ -125,11 +132,18 @@ void route_udp::event_trigger() {
 			if (source_node.s_node_type == RSU) continue;//RSU不触发事件
 			uniform_int_distribution<int> u_send_chance(0, 100);
 			if (get_time()->get_tti() % interval == source_node.m_broadcast_time&&u_send_chance(s_engine) <= 30) {//触发概率
-				get_node_array()[origin_source_node_id].offer_send_event_queue(
-					new route_udp_route_event(origin_source_node_id, -1, get_time()->get_tti(), route_udp_route_event::s_event_count++, 0)
-				);
+				vector<int> rsuid_selected = select_rsu(origin_source_node_id);
+				vector<int>::iterator it = rsuid_selected.begin();
+				while (it!= rsuid_selected.end())
+				{
+					get_node_array()[*it].offer_send_event_queue(
+						new route_udp_route_event(origin_source_node_id, -1, get_time()->get_tti(), route_udp_route_event::s_event_count, 0)
+					);
+					get_node_array()[*it].success_route_event[route_udp_route_event::s_event_count] = 0;
+					it++;
+				}
 				m_event_num++;
-				source_node.success_route_event[route_udp_route_event::s_event_count - 1] = 0;//标记该接收节点已经收到过此事件，避免重复接收
+				source_node.success_route_event[route_udp_route_event::s_event_count++] = 0;//标记该接收节点已经收到过此事件，避免重复接收
 			}
 		}
 	}
@@ -163,19 +177,13 @@ void route_udp::start_sending_data() {
 				if (dst_id == source_node_id || vue_physics::get_distance(source_node.m_send_event_queue.front()->get_origin_source_node_id(), dst_id) >= ((global_control_config*)__context->get_bean("global_control_config"))->get_max_distance()) continue;
 
 				map<int, double>::iterator marked = get_node_array()[dst_id].success_route_event.find(source_node.m_send_event_queue.front()->get_event_id());
-				if (marked != get_node_array()[dst_id].success_route_event.end()) continue;//如果某节点已经接收过该事件则不进行传输（减少运算量）
+				if (marked != get_node_array()[dst_id].success_route_event.end() && source_node.sending_link_event.size() != 0) continue;//如果某节点已经接收过该事件则不进行传输（减少运算量）
 
 				source_node.sending_link_event.push_back(new route_udp_link_event(
 					source_node_id, dst_id, select_res.second, source_node.peek_send_event_queue()->get_tti_num()));
-
 			}
-			if (source_node.sending_link_event.size() == 0) {//如果广播接收节点均已完成接收则不再建立广播连接
-				route_udp_route_event* temp = source_node.m_send_event_queue.front();
-				source_node.m_send_event_queue.pop();
-				delete temp;
-
-				//将已经加入干扰列表的车辆id再删掉
-				route_udp_node::s_node_id_per_pattern[select_res.second].erase(source_node_id);
+			if (source_node.sending_link_event.size() == 0) {
+				throw logic_error("error");//如果广播接收节点均已完成接收则不再建立广播连接
 			}
 			else {
 				m_broadcast_num++;
@@ -265,7 +273,7 @@ void route_udp::transmit_data() {
 						destination_node.success_route_event[source_node.m_send_event_queue.front()->get_event_id()] = vue_physics::get_distance(origin_node_id, destination_node_id);//标记该接收节点已经收到过此事件，避免重复接收
 						if (destination_node.s_node_type == VUE) {
 							m_success_route_event_num++;
-							s_logger_delay << get_time()->get_tti() - source_node.m_send_event_queue.front()->get_start_tti() << " ";
+							s_logger_delay << get_time()->get_tti() - source_node.m_send_event_queue.front()->get_start_tti() + 1 << " ";
 						}
 
 						s_logger_link_pdr_distance << source_node.m_send_event_queue.front()->m_hop << "," << get_gtt()->get_vue_array()[destination_node.get_id()].get_physics_level()->m_absx << "," << get_gtt()->get_vue_array()[destination_node.get_id()].get_physics_level()->m_absy << endl;
@@ -308,6 +316,25 @@ void route_udp::transmit_data() {
 	}
 }
 
+vector<int> route_udp::select_rsu(int vueid) {
+	map<double, int> distance_rsuid;
+	for (int rsuid = 0; rsuid < s_rsu_num; rsuid++) {
+		distance_rsuid[vue_physics::get_distance(s_car_num + rsuid, vueid)] = rsuid;
+	}
+
+	vector<int> rsuid_selected;
+	context* __context = context::get_context();
+	int select_rsu_num = ((global_control_config*)__context->get_bean("global_control_config"))->get_rsu_num();
+
+	if (select_rsu_num > s_rsu_num) throw logic_error("select_rsu_num>s_rsu_num");
+
+	map<double, int>::iterator it = distance_rsuid.begin();
+	for (int rsuid = 0; rsuid < select_rsu_num; rsuid++) {
+		rsuid_selected.push_back((*it).second + s_car_num);
+		it++;
+	}
+	return rsuid_selected;
+}
 //简单的根据距离维护邻接表
 void route_udp::update_route_table_from_physics_level() {
 

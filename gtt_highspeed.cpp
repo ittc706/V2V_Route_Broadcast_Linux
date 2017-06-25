@@ -38,6 +38,9 @@ void gtt_highspeed::initialize() {
 
 	/*srand((unsigned)time(0));*/
 	s_rsu_num = __config->get_road_length() / __config->get_rsu_space();//RSU数量
+	for (int i = 0; i < s_rsu_num; i++) {
+		s_rsu_pattern_id.push_back(i % 5);
+	}
 
 	//生成负指数分布的车辆到达间隔
 	int tempVeUENum = 0;
@@ -140,6 +143,10 @@ int gtt_highspeed::get_rsu_num() {
 
 int gtt_highspeed::get_freshtime() {
 	return get_config()->get_freshtime();
+}
+
+int gtt_highspeed::get_rsu_pattern_id(int rsuid) {
+	return s_rsu_pattern_id[rsuid];
 }
 
 void gtt_highspeed::fresh_location() {

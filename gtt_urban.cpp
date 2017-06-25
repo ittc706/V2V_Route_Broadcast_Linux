@@ -59,6 +59,10 @@ const double gtt_urban::s_rsu_topo_ratio[s_rsu_num * 2] = {
 	2.0f,-1.5f,
 };
 
+const int gtt_urban::s_rsu_pattern_id[s_rsu_num] = {
+	1,3,0,2,4,0,2,4,1,3,0,2,1,3,0,2,4,1,3,4,1,3,0,2,
+};
+
 void gtt_urban::initialize() {
 	gtt_urban_config* __config = get_config();
 	int* m_pupr = new int[__config->get_road_num()];//每条路上的车辆数
@@ -159,6 +163,11 @@ int gtt_urban::get_vue_num() {
 int gtt_urban::get_rsu_num() {
 	return s_rsu_num;
 }
+
+int gtt_urban::get_rsu_pattern_id(int rsuid) {
+	return s_rsu_pattern_id[rsuid];
+}
+
 int gtt_urban::get_freshtime() {
 	return get_config()->get_freshtime();
 }

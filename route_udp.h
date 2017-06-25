@@ -194,7 +194,8 @@ public:
 public:
 	int m_broadcast_time;//下次广播的时间
 public:
-	node_type s_node_type;
+	node_type s_node_type;//节点类型，包括车辆节点和RSU节点
+	int s_rsu_pattern_id;//RSU节点采用固定频段发送
 private:
 	/*
 	* 正在发送的link_event指针，每个子信道上一个
@@ -224,6 +225,10 @@ public:
 	*/
 private:
 	std::queue<route_udp_route_event*> m_send_event_queue;
+public:
+	int get_send_event_queue_length() {
+		return m_send_event_queue.size();
+	}
 public:
 	void offer_send_event_queue(route_udp_route_event* t_event) {
 		m_send_event_queue.push(t_event);
@@ -278,6 +283,8 @@ class route_udp :public route {
 public:
 	int s_car_num;//车辆总数
 	int s_rsu_num;//路边单元总数
+public:
+	static const double s_rsu_pattern[24 * 2];
 private:
 	/*
 	* 随机数引擎
@@ -399,5 +406,10 @@ private:
 	* 传输当前TTI存在的事件
 	*/
 	void transmit_data();
+
+	/*
+	* 选择RSU
+	*/
+	vector<int> select_rsu(int vueid);
 
 };

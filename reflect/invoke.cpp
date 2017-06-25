@@ -146,6 +146,7 @@ void invoke(const object* obj, const std::string& method_name, const std::string
 		METHOD_INVOKE_CLASS_START(global_control_config)
 		METHOD_INVOKE_ONE_PARAM(global_control_config, set_ntti)
 		METHOD_INVOKE_ONE_PARAM(global_control_config, set_max_distance)
+		METHOD_INVOKE_ONE_PARAM(global_control_config, set_rsu_num)
 		METHOD_INVOKE_CLASS_END(global_control_config)
 
 

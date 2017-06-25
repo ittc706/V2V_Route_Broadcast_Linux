@@ -36,10 +36,12 @@ void tmc::statistic() {
 	ofstream output;
 	ofstream s_logger_failed_distance;
 	ofstream s_logger_success_distance;
+	ofstream rsu_queue_length;
 
 	output.open("log/output.txt");
 	s_logger_failed_distance.open("log/failed_distance.txt");
 	s_logger_success_distance.open("log/success_distance.txt");
+	rsu_queue_length.open("log/rsu_queue_length.txt");
 
 	object* __object = context::get_context()->get_bean("route");
 
@@ -55,6 +57,7 @@ void tmc::statistic() {
 	output << "total failed event: " << failed_num << endl;
 	output << "total event number:" << total_num << endl;
 	output << "pdr:" << pdr << "%" << endl;
+	output << "event trigger times:" << __route_udp->get_event_num() << endl;
 	output << "total broadcast number:" << __route_udp->get_broadcast_num() << endl;
 
 	for (int i = 0; i < vue_physics::get_vue_num(); i++) {
@@ -68,5 +71,9 @@ void tmc::statistic() {
 			s_logger_success_distance << success->second << " ";
 			success++;
 		}
+	}
+
+	for (int i = __route_udp->s_car_num; i < __route_udp->s_car_num + __route_udp->s_rsu_num; i++) {
+		rsu_queue_length << __route_udp->get_node_array()[i].get_send_event_queue_length() << " ";
 	}
 }

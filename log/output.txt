@@ -1,5 +1,8 @@
-total success event: 5363
-total failed event: 2427
-total event number:7790
-pdr:68%
-total broadcast number:74
+vuenum:414
+rsunum:24
+total success event: 12476
+total failed event: 3958
+total event number:16434
+pdr:75%
+event trigger times:132
+total broadcast number:264
