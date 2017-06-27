@@ -74,6 +74,6 @@ void tmc::statistic() {
 	}
 
 	for (int i = __route_udp->s_car_num; i < __route_udp->s_car_num + __route_udp->s_rsu_num; i++) {
-		rsu_queue_length << __route_udp->get_node_array()[i].get_send_event_queue_length() << " ";
+		rsu_queue_length << __route_udp->get_node_array()[i].max_queue_length << " ";
 	}
 }

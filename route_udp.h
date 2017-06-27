@@ -196,6 +196,7 @@ public:
 public:
 	node_type s_node_type;//节点类型，包括车辆节点和RSU节点
 	int s_rsu_pattern_id;//RSU节点采用固定频段发送
+	int max_queue_length = 0;//RSU节点的最大队列长度
 private:
 	/*
 	* 正在发送的link_event指针，每个子信道上一个
@@ -411,5 +412,10 @@ private:
 	* 选择RSU
 	*/
 	vector<int> select_rsu(int vueid);
+
+	/*
+	* 输出RSU最大队列长度
+	*/
+	void output_max_queue_length();
 
 };

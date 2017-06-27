@@ -1,8 +1,8 @@
 vuenum:414
 rsunum:24
-total success event: 12476
-total failed event: 3958
-total event number:16434
-pdr:75%
-event trigger times:132
-total broadcast number:264
+total success event: 72396
+total failed event: 24568
+total event number:96964
+pdr:74%
+event trigger times:742
+total broadcast number:1484

@@ -1,5 +1,5 @@
 <bean id="global_control_config", class="global_control_config">
-	<property name="ntti", value="100"/>
+	<property name="ntti", value="600"/>
 	<property name="max_distance", value="500"/>
 	<property name="rsu_num", value="2"/>
 </bean>

@@ -119,6 +119,9 @@ void route_udp::process_per_tti() {
 
 	//传输当前TTI存在的事件
 	transmit_data();
+
+	//更新rsu队列最大长度
+	output_max_queue_length();
 }
 
 void route_udp::event_trigger() {
@@ -336,6 +339,15 @@ vector<int> route_udp::select_rsu(int vueid) {
 	return rsuid_selected;
 }
 //简单的根据距离维护邻接表
+
+void route_udp::output_max_queue_length() {
+	for (int rsuid = 0; rsuid < s_rsu_num; rsuid++) {
+		route_udp_node& source_node = get_node_array()[rsuid+s_car_num];
+		if (source_node.m_send_event_queue.size() > source_node.max_queue_length)
+			source_node.max_queue_length = source_node.m_send_event_queue.size();
+	}
+}
+
 void route_udp::update_route_table_from_physics_level() {
 
 }
