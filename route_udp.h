@@ -32,6 +32,12 @@ class route_udp_node;
 
 class route_udp_route_event {
 	/*
+	* 需要进行广播的RSUid
+	*/
+public:
+	vector<int> m_rsuid_selected;
+	
+	/*
 	* 事件存在的起始时间
 	*/
 private:
@@ -93,12 +99,13 @@ public:
 	/*
 	* 构造函数，提供给事件触发模块调用
 	*/
-	route_udp_route_event(int t_source_node, int t_destination_node, int current_tti, int event_id, int hop) :
+	route_udp_route_event(int t_source_node, int t_destination_node, int current_tti, int event_id, int hop,vector<int> rsuid_selected) :
 		m_event_id(event_id),
 		m_origin_source_node_id(t_source_node),
 		m_final_destination_node_id(t_destination_node),
 		m_hop(hop),
 		m_start_tti(current_tti),
+		m_rsuid_selected(rsuid_selected),
 		m_tti_num(((tmc_config*)context::get_context()->get_bean("tmc_config"))->get_package_num()) {
 	}
 

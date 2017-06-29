@@ -136,17 +136,11 @@ void route_udp::event_trigger() {
 			uniform_int_distribution<int> u_send_chance(0, 100);
 			if (get_time()->get_tti() % interval == source_node.m_broadcast_time&&u_send_chance(s_engine) <= 30) {//触发概率
 				vector<int> rsuid_selected = select_rsu(origin_source_node_id);
-				vector<int>::iterator it = rsuid_selected.begin();
-				while (it!= rsuid_selected.end())
-				{
-					get_node_array()[*it].offer_send_event_queue(
-						new route_udp_route_event(origin_source_node_id, -1, get_time()->get_tti(), route_udp_route_event::s_event_count, 0)
-					);
-					get_node_array()[*it].success_route_event[route_udp_route_event::s_event_count] = 0;
-					it++;
-				}
+				source_node.offer_send_event_queue(
+					new route_udp_route_event(origin_source_node_id, -1, get_time()->get_tti(), route_udp_route_event::s_event_count++, 0,rsuid_selected)
+				);
+				source_node.success_route_event[route_udp_route_event::s_event_count] = 0;//标记该接收节点已经收到过此事件，避免重复接收
 				m_event_num++;
-				source_node.success_route_event[route_udp_route_event::s_event_count++] = 0;//标记该接收节点已经收到过此事件，避免重复接收
 			}
 		}
 	}
@@ -172,7 +166,7 @@ void route_udp::start_sending_data() {
 			//维护干扰列表
 			route_udp_node::s_node_id_per_pattern[select_res.second].insert(source_node_id);
 
-			//对除了该节点以外的其他节点创建链路事件
+			//对该节点以外的其他节点创建链路事件进行广播
 			for (int dst_id = 0; dst_id < route_udp_node::s_node_count; dst_id++) {
 
 				context *__context = context::get_context();
@@ -281,11 +275,15 @@ void route_udp::transmit_data() {
 
 						s_logger_link_pdr_distance << source_node.m_send_event_queue.front()->m_hop << "," << get_gtt()->get_vue_array()[destination_node.get_id()].get_physics_level()->m_absx << "," << get_gtt()->get_vue_array()[destination_node.get_id()].get_physics_level()->m_absy << endl;
 
-						if (source_node.m_send_event_queue.front()->m_hop != 0) {
+						//如果是需要广播的RSU节点，则加入队列等待广播
+						vector<int> rsuid_selected = source_node.m_send_event_queue.front()->m_rsuid_selected;
+						vector<int>::iterator it1 = find(rsuid_selected.begin(), rsuid_selected.end(), destination_node_id);
+						if (it1!=rsuid_selected.end()) {
 							destination_node.offer_send_event_queue(
-								new route_udp_route_event(origin_node_id, -1,source_node.m_send_event_queue.front()->get_start_tti(), source_node.m_send_event_queue.front()->get_event_id(), source_node.m_send_event_queue.front()->m_hop - 1)
-							);//如果需要继续广播则在接收节点发送队列里加入事件
+								new route_udp_route_event(origin_node_id, -1,source_node.m_send_event_queue.front()->get_start_tti(), source_node.m_send_event_queue.front()->get_event_id(), source_node.m_send_event_queue.front()->m_hop - 1,rsuid_selected)
+							);
 						}
+
 						map<int, double>::iterator failed = destination_node.failed_route_event.find(source_node.m_send_event_queue.front()->get_event_id());
 						if (failed != destination_node.failed_route_event.end()) {
 							if (destination_node.s_node_type == VUE) {
