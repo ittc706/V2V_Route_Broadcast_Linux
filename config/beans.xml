@@ -2,6 +2,7 @@
 	<property name="ntti", value="600"/>
 	<property name="max_distance", value="500"/>
 	<property name="rsu_num", value="2"/>
+	<property name="max_queue", value="20"/>
 </bean>
 
 <bean id="gtt_highspeed_config", class="gtt_highspeed_config">

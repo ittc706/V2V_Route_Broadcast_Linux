@@ -2,6 +2,7 @@
 #include<iomanip>
 #include<fstream>
 #include<sstream>
+#include<algorithm>
 #include"route_udp.h"
 #include"config.h"
 #include"gtt.h"
@@ -278,9 +279,10 @@ void route_udp::transmit_data() {
 						//如果是需要广播的RSU节点，则加入队列等待广播
 						vector<int> rsuid_selected = source_node.m_send_event_queue.front()->m_rsuid_selected;
 						vector<int>::iterator it1 = find(rsuid_selected.begin(), rsuid_selected.end(), destination_node_id);
-						if (it1!=rsuid_selected.end()) {
+						context* __context = context::get_context();
+						if (it1 != rsuid_selected.end() && destination_node.m_send_event_queue.size() < ((global_control_config*)__context->get_bean("global_control_config"))->get_max_queue()) {
 							destination_node.offer_send_event_queue(
-								new route_udp_route_event(origin_node_id, -1,source_node.m_send_event_queue.front()->get_start_tti(), source_node.m_send_event_queue.front()->get_event_id(), source_node.m_send_event_queue.front()->m_hop - 1,rsuid_selected)
+								new route_udp_route_event(origin_node_id, -1, source_node.m_send_event_queue.front()->get_start_tti(), source_node.m_send_event_queue.front()->get_event_id(), source_node.m_send_event_queue.front()->m_hop - 1, rsuid_selected)
 							);
 						}
 

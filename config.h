@@ -30,6 +30,11 @@ private:
 	void set_rsu_num(std::string t_rsu_num) {
 		m_rsu_num = stoi(t_rsu_num);
 	}
+
+	int m_max_queue;
+	void set_max_queue(std::string t_max_queue) {
+		m_max_queue = stoi(t_max_queue);
+	}
 public:
 	int get_ntti() {
 		return m_ntti;
@@ -41,6 +46,10 @@ public:
 
 	int get_rsu_num() {
 		return m_rsu_num;
+	}
+
+	int get_max_queue() {
+		return m_max_queue;
 	}
 };
 
